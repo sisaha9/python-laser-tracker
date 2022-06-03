@@ -5,7 +5,11 @@ import cv2
 import numpy
 import math
 import random
+import time
 
+from pyrsistent import l
+
+TIME_THRESHOLD=2
 class LaserTracker(object):
 
     def __init__(self, cam_width=640, cam_height=480, hue_min=20, hue_max=160,
@@ -40,6 +44,7 @@ class LaserTracker(object):
         self.val_max = val_max
         self.display_thresholds = display_thresholds
         self.latest_letter = None
+        self.request_time = None
 
         self.capture = None  # camera capture device
         self.channels = {
@@ -131,6 +136,18 @@ class LaserTracker(object):
             # only works for filtering red color because the range for the hue
             # is split
             self.channels['hue'] = cv2.bitwise_not(self.channels['hue'])
+    
+    def get_latest_letter(self):
+        end_time = time.time()
+        if self.request_time is None:
+            letter = self.latest_letter
+            self.request_time = end_time
+        elif end_time - self.request_time > TIME_THRESHOLD:
+            letter = self.latest_letter
+            self.request_time = end_time
+        else:
+            letter = None
+        return letter
 
     def track(self, frame, mask):
         """
@@ -167,8 +184,7 @@ class LaserTracker(object):
                 5 : "F"
             }
             i = math.floor(x/(640/6))
-            self.latest_letter = random.choice(list(letters.items()))[1]
-            print(self.latest_letter)
+            self.latest_letter = letters[i]
 
             # only proceed if the radius meets a minimum size
             if radius > 1000:
