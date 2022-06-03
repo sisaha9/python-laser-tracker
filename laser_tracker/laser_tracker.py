@@ -3,7 +3,8 @@ import sys
 import argparse
 import cv2
 import numpy
-
+import math
+import random
 
 class LaserTracker(object):
 
@@ -38,6 +39,7 @@ class LaserTracker(object):
         self.val_min = val_min
         self.val_max = val_max
         self.display_thresholds = display_thresholds
+        self.latest_letter = None
 
         self.capture = None  # camera capture device
         self.channels = {
@@ -155,9 +157,21 @@ class LaserTracker(object):
                          int(moments["m01"] / moments["m00"])
             else:
                 center = int(x), int(y)
+            
+            letters = {
+                0 : "A",
+                1 : "B",
+                2 : "C",
+                3 : "D",
+                4 : "E",
+                5 : "F"
+            }
+            i = math.floor(x/(640/6))
+            self.latest_letter = random.choice(list(letters.items()))[1]
+            print(self.latest_letter)
 
             # only proceed if the radius meets a minimum size
-            if radius > 10:
+            if radius > 1000:
                 # draw the circle and centroid on the frame,
                 cv2.circle(frame, (int(x), int(y)), int(radius),
                            (0, 255, 255), 2)
