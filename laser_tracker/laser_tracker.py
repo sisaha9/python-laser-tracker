@@ -7,9 +7,7 @@ import math
 import random
 import time
 
-from pyrsistent import l
-
-TIME_THRESHOLD=2
+TIME_THRESHOLD=1.5 # Threshold to return letter in. In our case we send a letter to the code running this every 1.5 seconds
 class LaserTracker(object):
 
     def __init__(self, cam_width=640, cam_height=480, hue_min=20, hue_max=160,
@@ -138,16 +136,16 @@ class LaserTracker(object):
             self.channels['hue'] = cv2.bitwise_not(self.channels['hue'])
     
     def get_latest_letter(self):
-        end_time = time.time()
-        if self.request_time is None:
-            letter = self.latest_letter
-            self.request_time = end_time
-        elif end_time - self.request_time > TIME_THRESHOLD:
-            letter = self.latest_letter
-            self.request_time = end_time
+        end_time = time.time() # Get the current time
+        if self.request_time is None: # If this is the first time doing this
+            letter = self.latest_letter # Return the latest letter
+            self.request_time = end_time # Reset the request time
+        elif end_time - self.request_time > TIME_THRESHOLD: # If atleast TIME_THRESHOLD seconds have passed since last letter send
+            letter = self.latest_letter # Return the latest letter
+            self.request_time = end_time # Reset the request time
         else:
-            letter = None
-        return letter
+            letter = None # Otherwise do no send a letter
+        return letter # Send the result
 
     def track(self, frame, mask):
         """
@@ -175,16 +173,92 @@ class LaserTracker(object):
             else:
                 center = int(x), int(y)
             
-            letters = {
-                0 : "A",
-                1 : "B",
-                2 : "C",
-                3 : "D",
-                4 : "E",
-                5 : "F"
+            # Calibration dictionary indicating what letters are on each row
+            letters1 = {	
+                0 : "a",	
+                1 : "b",	
+                2 : "c",	
+                3 : "d",	
+                4 : "e",	
+                5 : "f",	
+                6 : "g",	
+                7 : "h",	
+                8 : "i",	
+            }	
+            letters2 = {	
+                0 : "j",	
+                1 : "k",	
+                2 : "l",	
+                3 : "m",	
+                4 : "n",	
+                5 : "o",	
+                6 : "p",	
+                7 : "q",	
+                8 : "r",	
+            }	
+            letters3 = {	
+                0 : "s",	
+                1 : "t",	
+                2 : "u",	
+                3 : "v",	
+                4 : "w",	
+                5 : "x",	
+                6 : "y",	
+                7 : "z",	
+            }	
+            letters4 = {	
+                0 : "1",	
+                1 : "2",	
+                2 : "3",	
+                3 : "4",	
+                4 : "5",	
+                5 : "6",	
+                6 : "7",	
+                7 : "8",	
+                8 : "9",	
+                9 : "0",	
+            }	
+            letters5 = {	
+                0 : "<-",	
+                1 : ".",	
+                2 : " ",	
+                3 : "clear",	
+                4 : "w1",	
+                5 : "w2",	
+                6 : "w3"	
             }
-            i = math.floor(x/(640/6))
-            self.latest_letter = letters[i]
+            # Code to figure out location of the letter by the row position
+            # M is calculated using the width of row divided by the number of letters in that row
+            # D is calculated by offseting the starting point of the row
+            # I is calculated by finding which segment of the row it's in by dividing M by D
+            # We then get the letter in that position
+            if y < 85 and x < 532 and x > 62: 	
+                m = (532 - 63)/9	
+                d = (x - 63)	
+                i = math.floor(d/m)	
+                self.latest_letter = letters1[i]
+            elif y<170 and x< 550 and x > 61:	
+                m = (560 - 62)/9	
+                	
+                d = (x - 62)	
+                i = math.floor(d/m)	
+                self.latest_letter = letters2[i]
+            elif y <265 and x < 535 and x > 82:	
+                m = (535 - 83)/8	
+                d = (x - 83)	
+                i = math.floor(d/(m))	
+                self.latest_letter = letters3[i]
+            elif y <375 and x > 40 and x < 571 :	
+                m = (571 - 41)/10	
+                d = (x - 41)	
+                i = math.floor(d/(m))	
+                self.latest_letter = letters4[i]
+            elif x <400 and x >45:	
+                m = (400 - 45)/7	
+                d = (x - 45)	
+                	
+                i = math.floor(d/(m))	
+                self.latest_letter = letters5[i]
 
             # only proceed if the radius meets a minimum size
             if radius > 1000:
@@ -297,11 +371,11 @@ if __name__ == '__main__':
                         type=int,
                         help='Hue Maximum Threshold')
     parser.add_argument('-s', '--satmin',
-                        default=100,
+                        default=80,
                         type=int,
                         help='Saturation Minimum Threshold')
     parser.add_argument('-S', '--satmax',
-                        default=255,
+                        default=100,
                         type=int,
                         help='Saturation Maximum Threshold')
     parser.add_argument('-v', '--valmin',
